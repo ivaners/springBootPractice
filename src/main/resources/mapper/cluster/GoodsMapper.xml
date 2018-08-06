@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.code.demo.dao.cluster.GoodsMapper">
+  <resultMap id="BaseResultMap" type="com.code.demo.domain.bo.Goods">
+    <id column="id" jdbcType="INTEGER" property="id" />
+    <result column="name" jdbcType="VARCHAR" property="name" />
+    <result column="random_name" jdbcType="CHAR" property="randomName" />
+    <result column="store" jdbcType="INTEGER" property="store" />
+    <result column="start_time" jdbcType="TIMESTAMP" property="startTime" />
+    <result column="end_time" jdbcType="TIMESTAMP" property="endTime" />
+    <result column="version" jdbcType="INTEGER" property="version" />
+    <result column="del_flag" jdbcType="BIT" property="delFlag" />
+  </resultMap>
+  <sql id="Base_Column_List">
+    id, name, random_name, store, start_time, end_time, version, del_flag
+  </sql>
+  <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+    select 
+    <include refid="Base_Column_List" />
+    from goods
+    where id = #{id,jdbcType=INTEGER}
+  </select>
+  <select id="findAll" resultMap="BaseResultMap">
+   select * from goods
+    <if test="_parameter != null and _parameter != ''">
+      <bind name="name" value="'%' + _parameter + '%'" />
+      where name LIKE #{name}
+    </if>
+  </select>
+  <select id="findByTime" resultMap="BaseResultMap">
+    select * from goods where start_time &lt;=#{startTime} and end_time &gt;=#{endTime}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
+    delete from goods
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" keyColumn="id" keyProperty="id" parameterType="com.code.demo.domain.bo.Goods" useGeneratedKeys="true">
+    insert into goods (name, random_name, store, 
+      start_time, end_time, version, 
+      del_flag)
+    values (#{name,jdbcType=VARCHAR}, #{randomName,jdbcType=CHAR}, #{store,jdbcType=INTEGER}, 
+      #{startTime,jdbcType=TIMESTAMP}, #{endTime,jdbcType=TIMESTAMP}, #{version,jdbcType=INTEGER}, 
+      #{delFlag,jdbcType=BIT})
+  </insert>
+  <insert id="insertSelective" keyColumn="id" keyProperty="id" parameterType="com.code.demo.domain.bo.Goods" useGeneratedKeys="true">
+    insert into goods
+    <trim prefix="(" suffix=")" suffixOverrides=",">
+      <if test="name != null">
+        name,
+      </if>
+      <if test="randomName != null">
+        random_name,
+      </if>
+      <if test="store != null">
+        store,
+      </if>
+      <if test="startTime != null">
+        start_time,
+      </if>
+      <if test="endTime != null">
+        end_time,
+      </if>
+      <if test="version != null">
+        version,
+      </if>
+      <if test="delFlag != null">
+        del_flag,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides=",">
+      <if test="name != null">
+        #{name,jdbcType=VARCHAR},
+      </if>
+      <if test="randomName != null">
+        #{randomName,jdbcType=CHAR},
+      </if>
+      <if test="store != null">
+        #{store,jdbcType=INTEGER},
+      </if>
+      <if test="startTime != null">
+        #{startTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="endTime != null">
+        #{endTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="version != null">
+        #{version,jdbcType=INTEGER},
+      </if>
+      <if test="delFlag != null">
+        #{delFlag,jdbcType=BIT},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.code.demo.domain.bo.Goods">
+    update goods
+    <set>
+      <if test="name != null">
+        name = #{name,jdbcType=VARCHAR},
+      </if>
+      <if test="randomName != null">
+        random_name = #{randomName,jdbcType=CHAR},
+      </if>
+      <if test="store != null">
+        store = #{store,jdbcType=INTEGER},
+      </if>
+      <if test="startTime != null">
+        start_time = #{startTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="endTime != null">
+        end_time = #{endTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="version != null">
+        version = #{version,jdbcType=INTEGER},
+      </if>
+      <if test="delFlag != null">
+        del_flag = #{delFlag,jdbcType=BIT},
+      </if>
+    </set>
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.code.demo.domain.bo.Goods">
+    update goods
+    set name = #{name,jdbcType=VARCHAR},
+      random_name = #{randomName,jdbcType=CHAR},
+      store = #{store,jdbcType=INTEGER},
+      start_time = #{startTime,jdbcType=TIMESTAMP},
+      end_time = #{endTime,jdbcType=TIMESTAMP},
+      version = #{version,jdbcType=INTEGER},
+      del_flag = #{delFlag,jdbcType=BIT}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+
+  <select id="getLock" resultMap="BaseResultMap">
+        <![CDATA[
+            select id from goods where id=#{id} for update;
+        ]]>
+    </select>
+  <update id="updateStoreById" parameterType="java.util.Map">
+    update goods set store = store - #{num} where id = #{id}
+  </update>
+
+  <update id="updateStore" parameterType="java.util.Map">
+    update goods set store = store - #{num},version=version+1 where id = #{id} and version = #{version}
+  </update>
+
+  <!--mybatis调用存储过程-->
+  <select id="doOrder" statementType="CALLABLE" parameterType="java.util.Map">
+       call pro_doorder(
+         #{goodsId,jdbcType=BIGINT,mode=IN},
+         #{mobile,jdbcType=VARCHAR,mode=IN},
+         #{orderTime,jdbcType=TIMESTAMP,mode=IN},
+         #{o_result,jdbcType=INTEGER,mode=OUT},
+         #{o_order_id,jdbcType=INTEGER,mode=OUT}
+       )
+   </select>
+</mapper>
